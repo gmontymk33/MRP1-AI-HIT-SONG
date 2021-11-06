@@ -1,1 +1,2 @@
 mido==1.2.9
+import music 21 (pip install git+https://github.com/cuthbertLab/music21.git)

@@ -2,6 +2,9 @@ from mido import MidiFile
 import os
 from os.path import join
 from Own_MidiFile import Own_MidiFile
+import music21
+import glob
+
 
 def get_all_midi_files():
     midi_files = []
@@ -32,3 +35,59 @@ def get_all_midi_files():
 
 # midi_files = get_all_midi_files()
 # print(len(midi_files))
+
+
+"""
+This code transposes the keys of all midi files to C major if it's a major key or C minor if it's a minor key and it saves
+the output songs in the same file. Run transpose_key function once in order to produce the midi files in C key.
+"""
+
+
+def transpose_key():
+    os.chdir("C:/Users/fib0/PycharmProjects/MRP1-AI-HIT-SONG/Data/Songs")
+
+    majors = dict(
+        [("A-", 4), ("A", 3), ("B-", 2), ("B", 1), ("C", 0), ("D-", -1), ("D", -2), ("E-", -3), ("E", -4), ("F", -5),
+         ("G-", 6), ("G", 5), ("G#", 4), ("F#", 6), ("D#", -3), ("C#", -1), ("A#", 2)])
+    minors = dict(
+        [("A-", 4), ("A", 3), ("B-", 2), ("B", 1), ("C", 0), ("D-", -1), ("D", -2), ("E-", -3), ("E", -4), ("F", -5),
+         ("G-", 6), ("G", 5), ("C#", -1), ("D#", -3), ("F#", 6), ("G#", 4), ("A#", 2)])
+
+    # Store the total number of midi files
+    total_size = len(glob.glob("*.midi"))
+
+    # The number of songs scanned so far
+    number_of_songs = 0
+
+    for file in glob.glob("*.midi"):
+        score = music21.converter.parse(file)
+        key = score.analyze('key')
+
+        print("For song " + str(number_of_songs) + " The key tonic name before = " + str(
+            key.tonic.name) + " and the key mode = " + str(key.mode))
+
+        if key.mode == "major":
+            halfSteps = majors[key.tonic.name]
+
+        elif key.mode == "minor":
+            halfSteps = minors[key.tonic.name]
+
+        newscore = score.transpose(halfSteps)
+        key = newscore.analyze('key')
+        print(key.tonic.name, key.mode + "\n")
+
+        # Check if the output key is correct
+
+        if key.tonic.name != "C":
+            print("Not A minor or C major")
+            break
+
+        newFileName = "C_" + file
+        newscore.write('midi', newFileName)
+
+        number_of_songs += 1
+
+        # Termination of the function when every song has been transposed
+
+        if number_of_songs > total_size:
+            break
