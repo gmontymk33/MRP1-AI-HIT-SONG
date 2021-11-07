@@ -1,7 +1,9 @@
-from mido import MidiFile
+from mido import MidiFile, Message
 import os
 from os.path import join
+from Own_Note import Own_Note
 from Own_MidiFile import Own_MidiFile
+from copy import deepcopy
 
 def get_all_midi_files():
     midi_files = []
@@ -20,6 +22,11 @@ def get_all_midi_files():
                     curr_tick = 0
                     for note in tracks[i]:
                         if note.type == 'note_on' or note.type == 'note_off':
+                            note = Own_Note(note.channel, note.is_meta, note.is_realtime, note.note, note.time, note.type, note.velocity)
+                            if note.type == "note_on" and note.time > 0:
+                                hold_note = Own_Note(note.channel, note.is_meta, note.is_realtime, note.note, note.time, "rest", note.velocity)
+                                hold_note.time += curr_tick
+                                new_track.append(hold_note)
                             note.time += curr_tick
                             curr_tick = note.time
                             new_track.append(note)
@@ -30,5 +37,5 @@ def get_all_midi_files():
 
     return midi_files
 
-# midi_files = get_all_midi_files()
+midi_files = get_all_midi_files()
 # print(len(midi_files))
