@@ -1,0 +1,28 @@
+from preprocess_midi2 import get_all_midi_files
+
+
+def midi_to_int_melody():
+    melodies = dict()
+    midi_files = get_all_midi_files()
+    for s in range(0,len(midi_files)):
+        melody = []
+        for n in range(0,len(midi_files[s].channels[0]),2):
+            on = midi_files[s].channels[0][n]
+            off = midi_files[s].channels[0][n+1]
+            nr_notes = (off.time-on.time)//256 # Number of 1/16th notes the note is worth; 256 ticks = 1/16 note
+
+            melody.append(on.note)
+            for i in range(0,nr_notes-1):
+                melody.append(-2)  # -2 represents holding the note (or rest)
+        melodies[s] = melody
+    return melodies
+
+
+if __name__ == "__main__":
+    melodies = midi_to_int_melody()
+    # Examples
+    print(melodies[0])
+    print(melodies[1])
+
+    # Important to note: songs are not the same length, some songs start with rest (which could be intentional or just
+    # delay in the midi)

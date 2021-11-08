@@ -6,6 +6,13 @@ from Own_MidiFile import Own_MidiFile
 import music21
 import glob
 
+# Ryan:
+# Slightly adjusted preprocess_midi the get_all_midi_files() method. Before, if no note was being played, it placed a
+# copy of the previous note but with note.type = "rest". Now, it treats a rest more like a note; it adds a note with
+# note.note = -1 and note.type = "note_on" when the rest starts and with note.type = "note_off" when it ends. I am not
+# sure if the use of -1 as a note value causes trouble in the other methods. Most likely some small adjustments need to
+# be made to those to accomodate for this special note value.
+
 
 def get_all_midi_files():
     midi_files = []
@@ -25,10 +32,14 @@ def get_all_midi_files():
                     for note in tracks[i]:
                         if note.type == 'note_on' or note.type == 'note_off':
                             new_note = Own_Note(note.channel, note.is_meta, note.is_realtime, note.note, note.time, note.type, note.velocity)
-                            if note.type == "note_on" and note.time > 0:
-                                  hold_note = Own_Note(note.channel, note.is_meta, note.is_realtime, note.note, note.time, "rest", note.velocity)
-                                  hold_note.time += curr_tick
-                                  new_track.append(hold_note)
+                            if note.type == "note_on" and note.time > 0: # note.note == -1 represents a rest
+                                hold_note_on = Own_Note(note.channel, note.is_meta, note.is_realtime, -1, note.time, "note_on", note.velocity)
+                                hold_note_on.time += curr_tick-note.time
+                                new_track.append(hold_note_on)
+                                hold_note_off = Own_Note(note.channel, note.is_meta, note.is_realtime, -1, note.time, "note_off", note.velocity)
+                                hold_note_off.time += curr_tick
+                                new_track.append(hold_note_off)
+
                             new_note.time += curr_tick
                             curr_tick = new_note.time
                             new_track.append(new_note)
