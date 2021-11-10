@@ -2,8 +2,11 @@ from preprocess_midi2 import get_all_midi_files
 
 
 def midi_to_int_melody():
+    # Assumes melody is in 0th channel, there is always only one note playing at the same time (so note on/off are
+    # alternated) meters are the same and ticks_per_beat is 1024. The meter and tick_per_beat are always true for our
+    # dataset, the rest is not sure.
     melodies = dict()
-    midi_files = get_all_midi_files()
+    midi_files = get_all_midi_files() # TODO: Should make sure that only files with proper amount of channels etc.
     for s in range(0,len(midi_files)):
         melody = []
         for n in range(0,len(midi_files[s].channels[0]),2):
