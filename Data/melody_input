@@ -1,6 +1,5 @@
 from preprocess_midi2 import get_all_midi_files
 
-
 def midi_to_int_melody():
     # Assumes melody is in 0th channel, there is always only one note playing at the same time (so note on/off are
     # alternated) meters are the same and ticks_per_beat is 1024. The meter and tick_per_beat are always true for our
@@ -20,6 +19,27 @@ def midi_to_int_melody():
         melodies[s] = melody
     return melodies
 
+def check_note_extremes(melodies):
+    # Check what the lowest note and highest note are in all songs and checking the maximum distance between notes
+    # Just to base decision on about the melody representation
+    max_note = 0
+    min_note = 128
+    max_diff = 0
+    for s,m in melodies.items():
+        mel_max = max(m)
+        mel_min = min(i for i in m if i >= 0)
+        mel_diff = mel_max-mel_min
+        if mel_max > max_note:
+            max_note = mel_max
+        if mel_min < min_note:
+            min_note = mel_min
+        if mel_diff > max_diff:
+            max_diff = mel_diff
+    return min_note,max_note,max_diff
+
+
+
+
 
 if __name__ == "__main__":
     melodies = midi_to_int_melody()
@@ -27,5 +47,8 @@ if __name__ == "__main__":
     print(melodies[0])
     print(melodies[1])
 
-    # Important to note: songs are not the same length, some songs start with rest (which could be intentional or just
-    # delay in the midi)
+    min_note,max_note,max_diff = check_note_extremes(melodies)
+    print("Min note: ", min_note, "Max note: ", max_note,  "Max note range: ", max_diff)
+
+# Important to note: songs are not the same length, some songs start with rest (which could be intentional or just
+# delay in the midi)

@@ -16,7 +16,7 @@ import glob
 
 def get_all_midi_files():
     midi_files = []
-    dir = "./Songs/"
+    dir = "./Songs/" # If we are going to use different midi files (i.e. split verse/chorus), change to proper directory
     files = os.listdir(dir)
     print(len(files))
     for midifilename in files:
