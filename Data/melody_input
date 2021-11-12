@@ -51,7 +51,7 @@ def onehot2intlist(onehot):
     # Turns the one-hot encoded array representation of a melody into the integer list representation
     intlist = [] * onehot.size[0]
     for i in range(len(intlist)):
-        idx = np.where(onehot[i, :] == 1)
+        idx = np.where(onehot[i, :] == 1)[0][0]
         if idx == 0:  # Hold
             intlist[i] = -2
         if idx == -1:  # Rest
