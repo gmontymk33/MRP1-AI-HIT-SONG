@@ -20,7 +20,7 @@ def note_distribution(melodies):
 
 def rand_input_melody(length):
     # Generates a random melody input for the network based on the distribution of the notes in the training data
-    notes = [-1, -2, range(36, 72)]  # TODO Change if range of notes is not 36-71
+    notes = [-1, -2] + [i for i in range(36, 72)]  # TODO Change if range of notes is not 36-71
     # Probability distribution found from note_distribution
     probs = [] # TODO Find distribution using note_distribution, then add it in here
     # Generate a list of note values
