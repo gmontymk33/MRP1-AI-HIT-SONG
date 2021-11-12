@@ -1,5 +1,5 @@
 from preprocess_midi import get_all_midi_files2
-
+import numpy as np
 
 def midi_to_int_melody():
     # Assumes melody is in 0th channel, there is always only one note playing at the same time (so note on/off are
