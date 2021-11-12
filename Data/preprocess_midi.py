@@ -43,6 +43,48 @@ def get_all_midi_files():
 # print(len(midi_files))
 
 
+def get_all_midi_files2():
+    # Ryan:
+    # Slightly adjusted the get_all_midi_files() method. Before, if no note was being played, it placed a copy of the
+    # previous note but with note.type = "rest". Now, it treats a rest more like a note; it adds a note with
+    # note.note = -1 and note.type = "note_on" when the rest starts and with note.type = "note_off" when it ends. I am
+    # not sure if the use of -1 as a note value could cause trouble. Also only tested if this worked for melody, so I
+    # left the original method there in case it doesn't work for chords/bass.
+    midi_files = []
+    dir = "./Songs/"  # If we are going to use different midi files (i.e. split verse/chorus), change to proper directory
+    files = os.listdir(dir)
+    print(len(files))
+    for midifilename in files:
+        if midifilename.endswith(".midi"):
+            midi = MidiFile(join(dir, midifilename), clip=True)
+            # if len(midi.tracks[1:]) == 1:
+            #     print(midifilename)
+            if len(midi.tracks[1:]) > 2:
+                tracks = midi.tracks[1:]
+                for i in range(len(tracks)):
+                    new_track = []
+                    curr_tick = 0
+                    for note in tracks[i]:
+                        if note.type == 'note_on' or note.type == 'note_off':
+                            new_note = Own_Note(note.channel, note.is_meta, note.is_realtime, note.note, note.time, note.type, note.velocity)
+                            if note.type == "note_on" and note.time > 0:  # note.note == -1 represents a rest
+                                hold_note_on = Own_Note(note.channel, note.is_meta, note.is_realtime, -1, note.time, "note_on", note.velocity)
+                                hold_note_on.time += curr_tick-note.time
+                                new_track.append(hold_note_on)
+                                hold_note_off = Own_Note(note.channel, note.is_meta, note.is_realtime, -1, note.time, "note_off", note.velocity)
+                                hold_note_off.time += curr_tick
+                                new_track.append(hold_note_off)
+
+                            new_note.time += curr_tick
+                            curr_tick = new_note.time
+                            new_track.append(new_note)
+                    tracks[i] = new_track
+
+                midi_file = Own_MidiFile(midi.length, midi.ticks_per_beat, midi.tracks[0][1].numerator, midi.tracks[0][1].denominator, midi.tracks[0][2].key, midi.tracks[0][3].tempo, midi.tracks[0][4].time, tracks)
+                midi_files.append(midi_file)
+
+    return midi_files
+
 """
 This code transposes the keys of all midi files to C major if it's a major key or C minor if it's a minor key and it saves
 the output songs in the same file. Run transpose_key function once in order to produce the midi files in C key.
