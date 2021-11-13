@@ -83,12 +83,22 @@ def check_note_extremes(melodies):
 if __name__ == "__main__":
     melodies = midi_to_int_melody()
     # Examples
-    print(melodies[0])
-    print(melodies[1])
+    #print(melodies[0])
+    #print(melodies[1])
 
     # Checks the range of notes in the training data
-    min_note,max_note,max_diff = check_note_extremes(melodies)
-    print("Min note: ", min_note, "Max note: ", max_note,  "Max note range: ", max_diff)
+    #min_note,max_note,max_diff = check_note_extremes(melodies)
+    #print("Min note: ", min_note, "Max note: ", max_note,  "Max note range: ", max_diff)
+
+    # Check length of each song (should actually be length of verse/chorus, but don't have the split yet)
+    # Need to know if all are multiple of 16 notes (so each consists of full bars)
+    #for s,m in melodies.items():
+    #    if len(m)%16 != 0:
+    #        print("song ",s, ": length ", len(m))
+    #        print(m)
+    # TODO: There is a problem with songs where the melody starts delayed (i.e. first chords start). This for instance then makes the melody start with 100 rests (song 178)
+    # Might be solved when split into verse/chorus
+
 
 # Important to note: songs are not the same length, some songs start with rest (which could be intentional or just
 # delay in the midi)
