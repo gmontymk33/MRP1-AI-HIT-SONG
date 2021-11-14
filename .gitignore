@@ -2,3 +2,9 @@ eurovision_dataset-master
 Songs
 .DS_Store
 .vscode
+.idea/modules.xml
+.idea/MRP1-AI-HIT-SONG.iml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+Data/transposed_songs_key_errors.txt
+Data/transposed_songs_length_errors.txt
