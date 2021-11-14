@@ -1,21 +1,24 @@
 from preprocess_midi import get_all_midi_files2
 import numpy as np
 
+
 def midi_to_int_melody():
     # Assumes melody is in 0th channel, there is always only one note playing at the same time (so note on/off are
     # alternated) meters are the same and ticks_per_beat is 1024. The meter and tick_per_beat are always true for our
     # dataset, the rest is not sure.
     melodies = dict()
-    midi_files = get_all_midi_files2()  # Should make sure that only files with proper amount of channels etc.
-    for s in range(0,len(midi_files)):
+    # Should make sure that only files with proper amount of channels etc.
+    midi_files = get_all_midi_files2()
+    for s in range(0, len(midi_files)):
         melody = []
-        for n in range(0,len(midi_files[s].channels[0]),2):
+        for n in range(0, len(midi_files[s].channels[0]), 2):
             on = midi_files[s].channels[0][n]
             off = midi_files[s].channels[0][n+1]
-            nr_notes = (off.time-on.time)//256  # Number of 1/16th notes the note is worth; 256 ticks = 1/16 note
+            # Number of 1/16th notes the note is worth; 256 ticks = 1/16 note
+            nr_notes = (off.time-on.time)//256
 
             melody.append(on.note)
-            for i in range(0,nr_notes-1):
+            for i in range(0, nr_notes-1):
                 melody.append(-2)  # -2 represents holding the note (or rest)
         melodies[s] = melody
     return melodies
@@ -32,14 +35,16 @@ def notes2index(notes):
         if notes[i] == -1:
             indices[i] = 1
         else:
-            indices[i] = notes[i] - 36  # TODO Subtract value of lowest note in our range (here assumed to be C2)
+            # TODO Subtract value of lowest note in our range (here assumed to be C2)
+            indices[i] = notes[i] - 36
     return indices
 
 
 def intlist2onehot(intlist):
     # Turns the integer list representation of a melody into the one-hot encoded array representation of size
     # timesteps X features
-    onehot = np.zeros((len(intlist), 38))  # TODO Check if number of inputs we use is in fact 38 (which is for 36 notes)
+    # TODO Check if number of inputs we use is in fact 38 (which is for 36 notes)
+    onehot = np.zeros((len(intlist), 38))
     idxs = notes2index(intlist)
     for i in range(len(intlist)):
         onehot[i, idxs[i]] = 1
@@ -56,7 +61,8 @@ def onehot2intlist(onehot):
         if idx == -1:  # Rest
             intlist[i] = -1
         else:
-            intlist[i] = idx + 36  # TODO Add value of lowest note in our range (here assumed to be C2)
+            # TODO Add value of lowest note in our range (here assumed to be C2)
+            intlist[i] = idx + 36
     return intlist
 
 
@@ -66,7 +72,7 @@ def check_note_extremes(melodies):
     max_note = 0
     min_note = 128
     max_diff = 0
-    for s,m in melodies.items():
+    for s, m in melodies.items():
         mel_max = max(m)
         mel_min = min(i for i in m if i >= 0)
         mel_diff = mel_max-mel_min
@@ -76,18 +82,115 @@ def check_note_extremes(melodies):
             min_note = mel_min
         if mel_diff > max_diff:
             max_diff = mel_diff
-    return min_note,max_note,max_diff
+    return min_note, max_note, max_diff
+
+
+def melodies_into_register(melodies, upper_thres, lower_thres):
+
+    new_melodies = dict()
+    for s in range(len(melodies.keys())):
+        shifted_melody = check_register(
+            melodies[s], upper_thres, lower_thres, False, False, False, False)
+        if(shifted_melody):
+            new_melodies[s] = shifted_melody
+
+    return new_melodies
+
+# Initially call with four last parameters set to false
+
+
+def check_register(melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper):
+    return check_upper_thres(melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper)
+
+
+def check_upper_thres(melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper):
+
+    shifted_melody = []
+
+    for n in range(len(melody)):
+        on = melody[n]
+
+        if on > upper_thres:
+            # save the difference
+            if moved_up == True:
+                print("Cannot Shift")
+                return None
+            moved_down = True
+            is_above_lower = False
+            # Restart and move all the notes 12 semitones down (except -1 and -2)
+            shifted_melody = move_notes(melody, 12, False)
+            shifted_melody = check_register(
+                shifted_melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper)
+            return shifted_melody
+
+    # if no note is above the upper threshold
+    is_below_upper = True
+    if is_above_lower == False:
+        return check_lower_thres(melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper)
+    else:
+        return melody
+
+
+def check_lower_thres(melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper):
+
+    shifted_melody = []
+
+    for n in range(len(melody)):
+        on = melody[n]
+
+# Take into account the -2, -1
+        if 0 < on < lower_thres:
+            # save the difference
+            if moved_down == True:
+                print("Cannot Shift")
+                return None
+            moved_up = True
+            is_below_upper = False
+            # Restart and move all the notes 12 semitones down (except -1 and -2)
+            shifted_melody = move_notes(melody, 12, True)
+            shifted_melody = check_register(
+                shifted_melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper)
+            return shifted_melody
+
+    # if no note is above the upper threshold
+    is_above_lower = True
+    if is_below_upper == False:
+        return check_upper_thres(melody, upper_thres, lower_thres, moved_up, moved_down, is_above_lower, is_below_upper)
+    else:
+        return melody
+
+
+def move_notes(fragment, semitones, direction):
+
+    melody = []
+    if direction == True:
+        for i in fragment:
+            if i != -1:
+                if i != -2:
+                    i = i+semitones
+            melody.append(i)
+        return melody
+    elif direction == False:
+        for i in fragment:
+            if i != -1:
+                if i != -2:
+                    i = i-semitones
+            melody.append(i)
+        return melody
 
 
 if __name__ == "__main__":
-    melodies = midi_to_int_melody()
+    # melodies = midi_to_int_melody()
     # Examples
-    print(melodies[0])
-    print(melodies[1])
+    # print(melodies[0])
+    # print(melodies[1])
+
+    melodies = melodies_into_register(midi_to_int_melody(), 83, 48)  # C3 -B5
 
     # Checks the range of notes in the training data
-    min_note,max_note,max_diff = check_note_extremes(melodies)
-    print("Min note: ", min_note, "Max note: ", max_note,  "Max note range: ", max_diff)
+    min_note, max_note, max_diff = check_note_extremes(melodies)
+    print("Min note: ", min_note, "Max note: ",
+          max_note,  "Max note range: ", max_diff)
 
-# Important to note: songs are not the same length, some songs start with rest (which could be intentional or just
-# delay in the midi)
+    # Important to note: songs are not the same length, some songs start with rest (which could be intentional or just
+    # delay in the midi)
