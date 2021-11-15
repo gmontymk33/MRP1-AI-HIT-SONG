@@ -22,9 +22,8 @@ def midi_to_int_melody():
 
 
 def notes2index(notes):
-    # Map note values (0-38 for notes, -1 for rest, -2 for hold) to indices of a list or one-hot where:
-    # hold = -2 --> 0, rest = -1 --> 1, notes = 0-35 --> 2:37
-    # TODO This assumes 36 notes, change if that's not the case
+    # Map note values (48-83 for notes, -1 for rest, -2 for hold) to indices of a list or one-hot where:
+    # hold = -2 --> 0, rest = -1 --> 1, notes = 48-83 --> 2:37
     indices = [] * len(notes)
     for i in range(1, len(notes)):
         if notes[i] == -2:
@@ -32,14 +31,14 @@ def notes2index(notes):
         if notes[i] == -1:
             indices[i] = 1
         else:
-            indices[i] = notes[i] - 36  # TODO Subtract value of lowest note in our range (here assumed to be C2)
+            indices[i] = notes[i] - 46
     return indices
 
 
 def intlist2onehot(intlist):
     # Turns the integer list representation of a melody into the one-hot encoded array representation of size
     # timesteps X features
-    onehot = np.zeros((len(intlist), 38))  # TODO Check if number of inputs we use is in fact 38 (which is for 36 notes)
+    onehot = np.zeros((len(intlist), 38))
     idxs = notes2index(intlist)
     for i in range(len(intlist)):
         onehot[i, idxs[i]] = 1
@@ -53,10 +52,10 @@ def onehot2intlist(onehot):
         idx = np.where(onehot[i, :] == 1)
         if idx == 0:  # Hold
             intlist[i] = -2
-        if idx == -1:  # Rest
+        if idx == 1:  # Rest
             intlist[i] = -1
         else:
-            intlist[i] = idx + 36  # TODO Add value of lowest note in our range (here assumed to be C2)
+            intlist[i] = idx + 46
     return intlist
 
 
