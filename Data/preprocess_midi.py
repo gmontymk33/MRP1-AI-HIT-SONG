@@ -11,8 +11,6 @@ def get_all_midi_files():
     midi_files = []
     dir = "./Data/Songs/"
     files = os.listdir(dir)
-    print(len(files))
-    note_vals = {}
     for midifilename in files:
         if midifilename.endswith(".midi"):
             # Clip=True clips high velocities
@@ -21,14 +19,6 @@ def get_all_midi_files():
             #     print(midifilename)
             if len(midi.tracks[1:]) >= 4:
                 tracks = midi.tracks[1:]
-
-                for note in midi.tracks[4]:
-                    try:
-                        if note.note % 12 not in note_vals:
-                            note_vals[note.note % 12] = 0
-                        note_vals[note.note % 12] += 1
-                    except:
-                        pass
 
                 for i in range(len(tracks)):
                     new_track = []
@@ -48,7 +38,6 @@ def get_all_midi_files():
                 midi_file = Own_MidiFile(midi.length, midi.ticks_per_beat, midi.tracks[0][1].numerator, midi.tracks[0][1].denominator, midi.tracks[0][2].key, midi.tracks[0][3].tempo, midi.tracks[0][4].time, tracks)
                 midi_files.append(midi_file)
 
-    print(note_vals.items())
     return midi_files
 
 midi_files = get_all_midi_files()

@@ -14,10 +14,9 @@ def split():
                 note_on_times = []
                 acc_time = 0
                 for note in midi.tracks[4]:
+                    acc_time += note.time
                     if note.type == "note_on":
                         note_on_times.append([acc_time, note.note])
-                    
-                    acc_time += note.time
 
                 #tracks without the meta channel and the fourth channel
                 tracks = midi.tracks[1:]
@@ -49,7 +48,7 @@ def split():
                             splits[note_split][idx].append(note)
                             j += 1
                             if j < len(track) and (curr_time + track[j].time) > stop_time:
-                                break
+                               break
 
                 #Save new midi file with split sections
                 for (split, tracks) in splits.items():
